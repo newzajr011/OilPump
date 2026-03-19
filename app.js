@@ -23,25 +23,47 @@ document.addEventListener("DOMContentLoaded", () => {
   let chartInstance = null;
   let editingId = null; // null = adding, number = editing
 
-  // ===== LocalStorage =====
-  const STORAGE_KEY = "oilPumpStations";
+  // ===== Firebase Setup & Realtime Database =====
+  const firebaseConfig = {
+    apiKey: "AIzaSyAlAVmjM65uriQpjp5gzb0HOcHStU3mq_8",
+    authDomain: "oilpump-2d8c9.firebaseapp.com",
+    projectId: "oilpump-2d8c9",
+    storageBucket: "oilpump-2d8c9.firebasestorage.app",
+    messagingSenderId: "174389559596",
+    appId: "1:174389559596:web:3429afd3ada35cfd43ac89",
+    databaseURL: "https://oilpump-2d8c9-default-rtdb.asia-southeast1.firebasedatabase.app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const dbRef = db.ref('stations');
 
   function loadStations() {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        // Replace in-memory data
-        fuelStations.length = 0;
-        parsed.forEach(s => fuelStations.push(s));
-      } catch (e) {
-        console.warn("Failed to load saved data, using defaults.");
+    dbRef.on('value', (snapshot) => {
+      const data = snapshot.val();
+      
+      if (data) {
+        fuelStations.length = 0; // Clear local array
+        for (const key in data) {
+          fuelStations.push({ ...data[key], firebaseKey: key });
+        }
+        
+        // Sort by ID to keep table consistent
+        fuelStations.sort((a, b) => a.id - b.id);
+        
+        populateBrandFilter();
+        updateDashboard();
+      } else {
+        // Firebase is empty, seed with initial data from data.js
+        console.log("Seeding Firebase with default data...");
+        if (typeof fuelStations !== 'undefined' && fuelStations.length > 0) {
+          const initialData = [...fuelStations];
+          initialData.forEach(station => {
+            dbRef.push(station);
+          });
+        }
       }
-    }
-  }
-
-  function saveStations() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(fuelStations));
+    });
   }
 
   function getNextId() {
@@ -50,9 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== Initialize =====
   function init() {
-    loadStations();
-    populateBrandFilter();
-    updateDashboard();
+    loadStations(); // Starts real-time listener which also updates UI
     attachEvents();
   }
 
@@ -108,20 +128,24 @@ document.addEventListener("DOMContentLoaded", () => {
     switch (action) {
       case "toggle-fuel": {
         const fuelKey = target.dataset.fuel;
-        station.fuels[fuelKey] = !station.fuels[fuelKey];
-        station.lastUpdated = formatNow();
-        saveStations();
-        updateDashboard();
+        const newValue = !station.fuels[fuelKey];
+        if (station.firebaseKey) {
+          dbRef.child(`${station.firebaseKey}/fuels`).update({ [fuelKey]: newValue });
+          dbRef.child(station.firebaseKey).update({ lastUpdated: formatNow() });
+        }
         // Brief flash animation
         target.style.transform = "scale(1.3)";
         setTimeout(() => target.style.transform = "", 200);
         break;
       }
       case "toggle-status": {
-        station.status = station.status === "open" ? "closed" : "open";
-        station.lastUpdated = formatNow();
-        saveStations();
-        updateDashboard();
+        const newStatus = station.status === "open" ? "closed" : "open";
+        if (station.firebaseKey) {
+          dbRef.child(station.firebaseKey).update({ 
+            status: newStatus,
+            lastUpdated: formatNow()
+          });
+        }
         break;
       }
       case "edit": {
@@ -130,11 +154,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       case "delete": {
         showConfirm(`ยืนยันลบปั๊ม "${station.name}" ?`, () => {
-          const idx = fuelStations.findIndex(s => s.id === id);
-          if (idx !== -1) fuelStations.splice(idx, 1);
-          saveStations();
-          populateBrandFilter();
-          updateDashboard();
+          if (station.firebaseKey) {
+            dbRef.child(station.firebaseKey).remove();
+          }
         });
         break;
       }
@@ -192,23 +214,24 @@ document.addEventListener("DOMContentLoaded", () => {
     if (editingId !== null) {
       // Edit existing
       const station = fuelStations.find(s => s.id === editingId);
-      if (station) Object.assign(station, data);
+      if (station && station.firebaseKey) {
+        dbRef.child(station.firebaseKey).update(data);
+      }
     } else {
       // Add new
       data.id = getNextId();
-      fuelStations.push(data);
+      dbRef.push(data);
     }
 
-    saveStations();
-    populateBrandFilter();
     closeModal();
-    updateDashboard();
   }
 
   function handleResetData() {
     showConfirm("ยืนยันรีเซ็ตข้อมูลกลับเป็นค่าเริ่มต้น?<br>ข้อมูลที่เพิ่ม/แก้ไขจะหายทั้งหมด", () => {
-      localStorage.removeItem(STORAGE_KEY);
-      location.reload();
+      // Remove everything from Firebase. Page reload restores standard data into empty DB.
+      dbRef.remove().then(() => {
+        location.reload();
+      });
     });
   }
 

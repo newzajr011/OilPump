@@ -129,13 +129,13 @@ document.addEventListener("DOMContentLoaded", () => {
         break;
       }
       case "delete": {
-        if (confirm(`ยืนยันลบปั๊ม "${station.name}" ?`)) {
+        showConfirm(`ยืนยันลบปั๊ม "${station.name}" ?`, () => {
           const idx = fuelStations.findIndex(s => s.id === id);
           if (idx !== -1) fuelStations.splice(idx, 1);
           saveStations();
           populateBrandFilter();
           updateDashboard();
-        }
+        });
         break;
       }
     }
@@ -206,10 +206,38 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function handleResetData() {
-    if (confirm("ยืนยันรีเซ็ตข้อมูลกลับเป็นค่าเริ่มต้น?\nข้อมูลที่เพิ่ม/แก้ไขจะหายทั้งหมด")) {
+    showConfirm("ยืนยันรีเซ็ตข้อมูลกลับเป็นค่าเริ่มต้น?<br>ข้อมูลที่เพิ่ม/แก้ไขจะหายทั้งหมด", () => {
       localStorage.removeItem(STORAGE_KEY);
       location.reload();
-    }
+    });
+  }
+
+  // ===== Custom Confirm Modal =====
+  function showConfirm(message, onConfirm) {
+    const overlay = document.getElementById("confirmModal");
+    const msgEl = document.getElementById("confirmMessage");
+    const yesBtn = document.getElementById("confirmYes");
+    const noBtn = document.getElementById("confirmNo");
+
+    msgEl.innerHTML = message;
+    overlay.classList.add("active");
+
+    // Remove old listeners
+    const newYes = yesBtn.cloneNode(true);
+    const newNo = noBtn.cloneNode(true);
+    yesBtn.parentNode.replaceChild(newYes, yesBtn);
+    noBtn.parentNode.replaceChild(newNo, noBtn);
+
+    newYes.addEventListener("click", () => {
+      overlay.classList.remove("active");
+      onConfirm();
+    });
+    newNo.addEventListener("click", () => {
+      overlay.classList.remove("active");
+    });
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) overlay.classList.remove("active");
+    }, { once: true });
   }
 
   function formatNow() {

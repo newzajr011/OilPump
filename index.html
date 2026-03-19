@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="แดชบอร์ดสรุปข้อมูลปั๊มน้ำมันในอำเภอ แสดงสถานะน้ำมันดีเซล เบนซิน 91 95 E20 E85">
+  <title>Oil Pump Dashboard — สรุปปั๊มน้ำมันในอำเภอ</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- ===== Header ===== -->
+    <header class="header">
+      <div class="header__icon">⛽</div>
+      <h1 class="header__title">Oil Pump Dashboard</h1>
+      <p class="header__subtitle">สรุปข้อมูลปั๊มน้ำมันในอำเภอ — สถานะน้ำมันแต่ละชนิด</p>
+      <p class="header__timestamp" id="headerTimestamp"></p>
+    </header>
+
+    <!-- ===== Summary Cards ===== -->
+    <div class="summary-grid">
+      <div class="summary-card summary-card--total">
+        <div class="summary-card__icon">🏢</div>
+        <div class="summary-card__value" id="totalStations">0</div>
+        <div class="summary-card__label">ปั๊มทั้งหมด</div>
+      </div>
+      <div class="summary-card summary-card--open">
+        <div class="summary-card__icon">✅</div>
+        <div class="summary-card__value" id="openStations">0</div>
+        <div class="summary-card__label">เปิดให้บริการ</div>
+      </div>
+      <div class="summary-card summary-card--closed">
+        <div class="summary-card__icon">🚫</div>
+        <div class="summary-card__value" id="closedStations">0</div>
+        <div class="summary-card__label">ปิดให้บริการ</div>
+      </div>
+      <div class="summary-card summary-card--most">
+        <div class="summary-card__icon">🔥</div>
+        <div class="summary-card__value" id="mostFuel">-</div>
+        <div class="summary-card__label">น้ำมันที่มีมากที่สุด</div>
+      </div>
+      <div class="summary-card summary-card--least">
+        <div class="summary-card__icon">⚠️</div>
+        <div class="summary-card__value" id="leastFuel">-</div>
+        <div class="summary-card__label">น้ำมันที่มีน้อยที่สุด</div>
+      </div>
+    </div>
+
+    <!-- ===== Controls ===== -->
+    <div class="controls">
+      <div class="search-box">
+        <span class="search-box__icon">🔍</span>
+        <input type="text" class="search-box__input" id="searchInput" placeholder="ค้นหาชื่อปั๊มหรือที่อยู่...">
+      </div>
+      <select class="filter-select" id="brandFilter">
+        <option value="">แบรนด์ทั้งหมด</option>
+      </select>
+      <select class="filter-select" id="statusFilter">
+        <option value="">สถานะทั้งหมด</option>
+        <option value="open">เปิด</option>
+        <option value="closed">ปิด</option>
+      </select>
+    </div>
+
+    <!-- ===== Content Grid ===== -->
+    <div class="content-grid">
+
+      <!-- Station Table -->
+      <div class="table-container">
+        <div class="table-container__header">
+          <div class="table-container__title">
+            📋 รายการปั๊มน้ำมัน
+            <span class="table-container__count" id="stationCount"></span>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="station-table">
+            <thead>
+              <tr>
+                <th>ชื่อปั๊ม / ที่ตั้ง</th>
+                <th>แบรนด์</th>
+                <th>สถานะ</th>
+                <th>ดีเซล</th>
+                <th>91</th>
+                <th>95</th>
+                <th>E20</th>
+                <th>E85</th>
+              </tr>
+            </thead>
+            <tbody id="stationTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Chart Panel -->
+      <div class="chart-panel">
+        <div class="chart-panel__title">📊 สรุปจำนวนปั๊มตามชนิดน้ำมัน</div>
+        <div class="chart-wrapper">
+          <canvas id="fuelChart"></canvas>
+        </div>
+        <div class="fuel-legend" id="fuelLegend"></div>
+      </div>
+
+    </div>
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer">
+      Oil Pump Dashboard © 2026 — ข้อมูลจำลองเพื่อการสาธิต
+    </footer>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+
+  <!-- Set timestamp -->
+  <script>
+    document.getElementById("headerTimestamp").textContent =
+      "อัปเดตล่าสุด: " + new Date().toLocaleString("th-TH", {
+        year: "numeric", month: "long", day: "numeric",
+        hour: "2-digit", minute: "2-digit"
+      });
+  </script>
+
+</body>
+</html>

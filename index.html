@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="แดชบอร์ดสรุปข้อมูลปั๊มน้ำมันในอำเภอ แสดงสถานะน้ำมันดีเซล เบนซิน 91 95 E20 E85">
-  <title>Oil Pump Dashboard — สรุปปั๊มน้ำมันในอำเภอ</title>
+  <title>Oil Pump — สรุปปั๊มน้ำมันในอำเภอท่าเรือ อยุธยา</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,8 +24,8 @@
     <!-- ===== Header ===== -->
     <header class="header">
       <div class="header__icon">⛽</div>
-      <h1 class="header__title">Oil Pump Dashboard</h1>
-      <p class="header__subtitle">สรุปข้อมูลปั๊มน้ำมันในอำเภอ — สถานะน้ำมันแต่ละชนิด</p>
+      <h1 class="header__title">Oil Pump อ.ท่าเรือ จ.อยุธยา</h1>
+      <p class="header__subtitle">สรุปข้อมูลปั๊มน้ำมันในอำเภอท่าเรือ จ.อยุธยา — สถานะน้ำมันแต่ละชนิด</p>
       <p class="header__timestamp" id="headerTimestamp"></p>
     </header>
 
@@ -72,6 +72,13 @@
         <option value="open">เปิด</option>
         <option value="closed">ปิด</option>
       </select>
+      <button class="btn-add" id="addStationBtn">➕ เพิ่มปั๊ม</button>
+      <button class="btn-reset" id="resetDataBtn" title="รีเซ็ตข้อมูลกลับเป็นค่าเริ่มต้น">🔄 รีเซ็ต</button>
+    </div>
+
+    <!-- ===== Tip Bar ===== -->
+    <div class="tip-bar">
+      💡 <strong>คลิกที่ ✓ / ✗</strong> ในตารางเพื่อเปลี่ยนสถานะน้ำมัน | คลิก <strong>เปิด/ปิด</strong> เพื่อเปลี่ยนสถานะปั๊ม | ข้อมูลจะบันทึกอัตโนมัติ
     </div>
 
     <!-- ===== Content Grid ===== -->
@@ -97,6 +104,7 @@
                 <th>95</th>
                 <th>E20</th>
                 <th>E85</th>
+                <th>จัดการ</th>
               </tr>
             </thead>
             <tbody id="stationTableBody">
@@ -121,6 +129,77 @@
       Oil Pump Dashboard © 2026 — ข้อมูลจำลองเพื่อการสาธิต
     </footer>
 
+  </div>
+
+  <!-- ===== Add/Edit Station Modal ===== -->
+  <div class="modal-overlay" id="stationModal">
+    <div class="modal">
+      <div class="modal__header">
+        <h2 class="modal__title" id="modalTitle">➕ เพิ่มปั๊มน้ำมันใหม่</h2>
+        <button class="modal__close" id="cancelBtn">✕</button>
+      </div>
+      <form id="stationForm" class="modal__form">
+        <div class="form-group">
+          <label for="formName">ชื่อปั๊ม</label>
+          <input type="text" id="formName" required placeholder="เช่น PTT สาขาถนนมิตรภาพ">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="formBrand">แบรนด์</label>
+            <input type="text" id="formBrand" required placeholder="เช่น PTT, Shell, Bangchak" list="brandSuggestions">
+            <datalist id="brandSuggestions">
+              <option value="PTT">
+              <option value="Shell">
+              <option value="Bangchak">
+              <option value="Caltex">
+              <option value="Susco">
+              <option value="PT">
+              <option value="Esso">
+            </datalist>
+          </div>
+          <div class="form-group">
+            <label for="formStatus">สถานะ</label>
+            <select id="formStatus">
+              <option value="open">เปิด</option>
+              <option value="closed">ปิด</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="formAddress">ที่อยู่</label>
+          <input type="text" id="formAddress" required placeholder="เช่น 123 ถ.มิตรภาพ ต.ในเมือง">
+        </div>
+        <div class="form-group">
+          <label>น้ำมันที่มีจำหน่าย</label>
+          <div class="fuel-checkboxes">
+            <label class="fuel-checkbox">
+              <input type="checkbox" id="fuelDiesel" checked>
+              <span class="fuel-checkbox__label">ดีเซล</span>
+            </label>
+            <label class="fuel-checkbox">
+              <input type="checkbox" id="fuelBenzine91" checked>
+              <span class="fuel-checkbox__label">เบนซิน 91</span>
+            </label>
+            <label class="fuel-checkbox">
+              <input type="checkbox" id="fuelBenzine95">
+              <span class="fuel-checkbox__label">เบนซิน 95</span>
+            </label>
+            <label class="fuel-checkbox">
+              <input type="checkbox" id="fuelE20">
+              <span class="fuel-checkbox__label">E20</span>
+            </label>
+            <label class="fuel-checkbox">
+              <input type="checkbox" id="fuelE85">
+              <span class="fuel-checkbox__label">E85</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" id="cancelBtn2" onclick="document.getElementById('stationModal').classList.remove('active')">ยกเลิก</button>
+          <button type="submit" class="btn-primary">💾 บันทึก</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Scripts -->

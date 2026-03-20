@@ -96,20 +96,27 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== Fetch Fuel Prices =====
   async function fetchFuelPrices() {
     try {
-      const prices = [
-        { name: "ดีเซล B7", price: "32.94" },
-        { name: "ดีเซล", price: "32.94" },
-        { name: "แก๊สโซฮอล์ 95", price: "38.55" },
-        { name: "แก๊สโซฮอล์ 91", price: "38.28" },
-        { name: "E20", price: "36.44" },
-        { name: "E85", price: "36.05" }
-      ];
+      const resp = await fetch('https://api.chnwt.dev/thai-oil-api/latest');
+      if (!resp.ok) throw new Error('Network response was not ok');
+      const data = await resp.json();
       
-      const parts = prices.map(p => `<span class="price-item">⛽ <strong>${p.name}</strong>: ${p.price} บ./ลิตร</span>`);
+      const ptt = data.response.stations.ptt;
+      const targetKeys = ['diesel_b7', 'diesel', 'gasohol_95', 'gasohol_91', 'gasohol_e20', 'gasohol_e85'];
+      const parts = [];
+      
+      targetKeys.forEach(k => {
+        if (ptt && ptt[k]) {
+          parts.push(`<span class="price-item">⛽ <strong>${ptt[k].name}</strong>: ${ptt[k].price} บ./ลิตร</span>`);
+        }
+      });
+      
+      if (parts.length === 0) throw new Error('No prices found');
+
       // Duplicate to create illusion of continuous loop
       priceMarquee.innerHTML = parts.join(" &nbsp;&nbsp;&nbsp;&nbsp; ") + " &nbsp;&nbsp;&nbsp;&nbsp; " + parts.join(" &nbsp;&nbsp;&nbsp;&nbsp; ");
     } catch (e) {
-      priceMarquee.innerHTML = "<span>⚠️ ไม่สามารถโหลดราคาน้ำมันได้</span>";
+      console.error("Fuel Price API Error:", e);
+      priceMarquee.innerHTML = "<span>⚠️ ไม่สามารถโหลดราคาน้ำมันล่าสุดได้ (กำลังปรับปรุง API)</span>";
     }
   }
 

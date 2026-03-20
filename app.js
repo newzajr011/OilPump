@@ -263,6 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("formName").value = station.name;
     document.getElementById("formBrand").value = station.brand;
     document.getElementById("formAddress").value = station.address;
+    document.getElementById("formMapUrl").value = station.mapUrl || "";
     document.getElementById("formStatus").value = station.status;
     document.getElementById("fuelDiesel").checked = station.fuels.diesel;
     document.getElementById("fuelBenzine91").checked = station.fuels.benzine91;
@@ -280,10 +281,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function handleFormSubmit(e) {
     e.preventDefault();
+    const mapUrlVal = document.getElementById("formMapUrl").value.trim();
     const data = {
       name: document.getElementById("formName").value.trim(),
       brand: document.getElementById("formBrand").value.trim(),
       address: document.getElementById("formAddress").value.trim(),
+      mapUrl: mapUrlVal,
       status: document.getElementById("formStatus").value,
       fuels: {
         diesel: document.getElementById("fuelDiesel").checked,
@@ -459,7 +462,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
           </td>` : `<td class="admin-only" style="display: none;"></td>`;
 
-      const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name + ' ' + s.address)}`;
+      const googleMapsUrl = s.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name + ' ' + s.address)}`;
       const updatedTime = s.lastUpdated ? `อัปเดต: ${s.lastUpdated}` : 'ยังไม่มีการอัปเดต';
 
       return `

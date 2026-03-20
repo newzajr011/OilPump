@@ -105,6 +105,42 @@ body::before {
   margin-top: 8px;
 }
 
+/* ===== Price Banner ===== */
+.price-banner {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+  overflow: hidden;
+  padding: 12px 0;
+  white-space: nowrap;
+  position: relative;
+  display: flex;
+  align-items: center;
+  animation: fadeInDown 0.6s ease-out 0.1s both;
+}
+
+.price-banner__track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: scrollMarquee 40s linear infinite;
+}
+
+.price-item {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.price-item strong {
+  color: var(--accent-cyan);
+}
+
+@keyframes scrollMarquee {
+  0% { transform: translateX(10%); }
+  100% { transform: translateX(-100%); }
+}
+
 /* ===== Summary Cards Grid ===== */
 .summary-grid {
   display: grid;
@@ -363,9 +399,18 @@ body::before {
   white-space: nowrap;
 }
 
-.station-name__address {
+a.station-name__address {
   color: var(--text-muted);
   font-size: 0.78rem;
+  text-decoration: none;
+  transition: var(--transition);
+  display: inline-block;
+  margin-top: 2px;
+}
+
+a.station-name__address:hover {
+  color: var(--accent-blue);
+  text-decoration: underline;
 }
 
 /* Brand badge */
@@ -596,6 +641,27 @@ body::before {
 .btn-reset:hover {
   border-color: var(--accent-amber);
   color: var(--accent-amber);
+}
+
+/* ===== Admin Button ===== */
+.btn-admin {
+  padding: 14px 20px;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: var(--radius-md);
+  color: #c4b5fd;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.btn-admin:hover {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: #8b5cf6;
+  color: #fff;
 }
 
 /* ===== Tip Bar ===== */

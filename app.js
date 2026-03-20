@@ -13,6 +13,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const cancelBtn = document.getElementById("cancelBtn");
   const resetDataBtn = document.getElementById("resetDataBtn");
 
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const loginModal = document.getElementById("loginModal");
+  const loginForm = document.getElementById("loginForm");
+  const loginCancelBtn = document.getElementById("loginCancelBtn");
+  const priceMarquee = document.getElementById("priceMarquee");
+
+  let isAdmin = sessionStorage.getItem("isAdmin") === "true";
+
+  function updateAdminUI() {
+    document.querySelectorAll('.admin-only').forEach(el => {
+      el.style.display = isAdmin ? '' : 'none';
+    });
+    document.querySelectorAll('.public-only').forEach(el => {
+      el.style.display = isAdmin ? 'none' : '';
+    });
+    if (isAdmin) {
+      document.body.classList.add('admin-mode');
+    } else {
+      document.body.classList.remove('admin-mode');
+    }
+  }
+
   // Summary card elements
   const totalStations = document.getElementById("totalStations");
   const openStations = document.getElementById("openStations");
@@ -70,8 +93,30 @@ document.addEventListener("DOMContentLoaded", () => {
     return fuelStations.length > 0 ? Math.max(...fuelStations.map(s => s.id)) + 1 : 1;
   }
 
+  // ===== Fetch Fuel Prices =====
+  async function fetchFuelPrices() {
+    try {
+      const prices = [
+        { name: "ดีเซล B7", price: "32.94" },
+        { name: "ดีเซล", price: "32.94" },
+        { name: "แก๊สโซฮอล์ 95", price: "38.55" },
+        { name: "แก๊สโซฮอล์ 91", price: "38.28" },
+        { name: "E20", price: "36.44" },
+        { name: "E85", price: "36.05" }
+      ];
+      
+      const parts = prices.map(p => `<span class="price-item">⛽ <strong>${p.name}</strong>: ${p.price} บ./ลิตร</span>`);
+      // Duplicate to create illusion of continuous loop
+      priceMarquee.innerHTML = parts.join(" &nbsp;&nbsp;&nbsp;&nbsp; ") + " &nbsp;&nbsp;&nbsp;&nbsp; " + parts.join(" &nbsp;&nbsp;&nbsp;&nbsp; ");
+    } catch (e) {
+      priceMarquee.innerHTML = "<span>⚠️ ไม่สามารถโหลดราคาน้ำมันได้</span>";
+    }
+  }
+
   // ===== Initialize =====
   function init() {
+    updateAdminUI();
+    fetchFuelPrices();
     loadStations(); // Starts real-time listener which also updates UI
     attachEvents();
   }
@@ -101,6 +146,43 @@ document.addEventListener("DOMContentLoaded", () => {
     modalForm.addEventListener("submit", handleFormSubmit);
     resetDataBtn.addEventListener("click", handleResetData);
 
+    loginBtn.addEventListener("click", () => {
+      loginModal.classList.add("active");
+      document.getElementById("formPassword").focus();
+    });
+    loginCancelBtn.addEventListener("click", () => {
+      loginModal.classList.remove("active");
+      document.getElementById("formPassword").value = "";
+    });
+    logoutBtn.addEventListener("click", () => {
+      isAdmin = false;
+      sessionStorage.setItem("isAdmin", "false");
+      updateAdminUI();
+      updateDashboard();
+    });
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const pwd = document.getElementById("formPassword").value;
+      if (pwd === "1234") { // Mock PIN
+        isAdmin = true;
+        sessionStorage.setItem("isAdmin", "true");
+        loginModal.classList.remove("active");
+        document.getElementById("formPassword").value = "";
+        updateAdminUI();
+        updateDashboard();
+      } else {
+        alert("รหัสผ่านไม่ถูกต้อง!");
+      }
+    });
+
+    // Close login modal on backdrop
+    loginModal.addEventListener("click", (e) => {
+      if (e.target === loginModal) {
+        loginModal.classList.remove("active");
+        document.getElementById("formPassword").value = "";
+      }
+    });
+
     // Close modal on backdrop click
     modal.addEventListener("click", (e) => {
       if (e.target === modal) closeModal();
@@ -119,6 +201,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleTableClick(e) {
     const target = e.target.closest("[data-action]");
     if (!target) return;
+    
+    if (!isAdmin) return; // Project actions from non-admins
 
     const action = target.dataset.action;
     const id = parseInt(target.dataset.id);
@@ -360,16 +444,31 @@ document.addEventListener("DOMContentLoaded", () => {
       const bc = brandColors[s.brand] || { bg: "#1e293b", accent: "#94a3b8" };
       const statusClass = s.status === "open" ? "open" : "closed";
       const statusText = s.status === "open" ? "เปิด" : "ปิด";
+      const statusClickable = isAdmin ? "clickable" : "";
+      const statusActionAttr = isAdmin ? `data-action="toggle-status" data-id="${s.id}"` : "";
+      const statusTitle = isAdmin ? "คลิกเพื่อเปลี่ยนสถานะ" : statusText;
 
       const fuelKeys = ["diesel", "benzine91", "benzine95", "e20", "e85"];
       const fuelCells = fuelKeys.map(key => renderFuelCell(s.id, key, s.fuels[key])).join("");
+      
+      const adminActions = isAdmin ? `
+          <td class="admin-only">
+            <div class="action-buttons">
+              <button class="action-btn action-btn--edit" data-action="edit" data-id="${s.id}" title="แก้ไข">✏️</button>
+              <button class="action-btn action-btn--delete" data-action="delete" data-id="${s.id}" title="ลบ">🗑️</button>
+            </div>
+          </td>` : `<td class="admin-only" style="display: none;"></td>`;
+
+      const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name + ' ' + s.address)}`;
+      const updatedTime = s.lastUpdated ? `อัปเดต: ${s.lastUpdated}` : 'ยังไม่มีการอัปเดต';
 
       return `
         <tr style="animation: fadeInUp 0.3s ease-out ${i * 0.03}s both">
           <td>
             <div class="station-name">
               <span class="station-name__main">${s.name}</span>
-              <span class="station-name__address">${s.address}</span>
+              <a href="${googleMapsUrl}" target="_blank" class="station-name__address" title="เปิดแผนที่นำทาง">📍 ${s.address}</a>
+              <span class="station-name__updated" style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">⏱ ${updatedTime}</span>
             </div>
           </td>
           <td>
@@ -378,18 +477,13 @@ document.addEventListener("DOMContentLoaded", () => {
             </span>
           </td>
           <td>
-            <span class="status-badge status-badge--${statusClass} clickable" data-action="toggle-status" data-id="${s.id}" title="คลิกเพื่อเปลี่ยนสถานะ">
+            <span class="status-badge status-badge--${statusClass} ${statusClickable}" ${statusActionAttr} title="${statusTitle}">
               <span class="status-badge__dot"></span>
               ${statusText}
             </span>
           </td>
           ${fuelCells}
-          <td>
-            <div class="action-buttons">
-              <button class="action-btn action-btn--edit" data-action="edit" data-id="${s.id}" title="แก้ไข">✏️</button>
-              <button class="action-btn action-btn--delete" data-action="delete" data-id="${s.id}" title="ลบ">🗑️</button>
-            </div>
-          </td>
+          ${adminActions}
         </tr>`;
     }).join("");
   }
@@ -397,8 +491,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderFuelCell(stationId, fuelKey, available) {
     const cls = available ? "fuel-icon--available" : "fuel-icon--unavailable";
     const icon = available ? "✓" : "✗";
-    const title = available ? "มีจำหน่าย — คลิกเพื่อเปลี่ยน" : "ไม่มีจำหน่าย — คลิกเพื่อเปลี่ยน";
-    return `<td><span class="fuel-icon ${cls} clickable" data-action="toggle-fuel" data-id="${stationId}" data-fuel="${fuelKey}" title="${title}">${icon}</span></td>`;
+    const clickableCls = isAdmin ? "clickable" : "";
+    const actionAttr = isAdmin ? `data-action="toggle-fuel" data-id="${stationId}" data-fuel="${fuelKey}"` : "";
+    const title = available ? (isAdmin ? "มีจำหน่าย — คลิกเพื่อเปลี่ยน" : "มีจำหน่าย") : (isAdmin ? "ไม่มีจำหน่าย — คลิกเพื่อเปลี่ยน" : "ไม่มีจำหน่าย");
+    return `<td><span class="fuel-icon ${cls} ${clickableCls}" ${actionAttr} title="${title}">${icon}</span></td>`;
   }
 
   // ===== Render Chart =====

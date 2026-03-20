@@ -21,13 +21,19 @@
 
   <div class="app-container">
 
-    <!-- ===== Header ===== -->
     <header class="header">
       <div class="header__icon">⛽</div>
       <h1 class="header__title">Oil Pump อ.ท่าเรือ จ.อยุธยา</h1>
       <p class="header__subtitle">สรุปข้อมูลปั๊มน้ำมันในอำเภอท่าเรือ จ.อยุธยา — สถานะน้ำมันแต่ละชนิด</p>
       <p class="header__timestamp" id="headerTimestamp"></p>
     </header>
+
+    <!-- ===== Price Banner ===== -->
+    <div class="price-banner">
+      <div class="price-banner__track" id="priceMarquee">
+        <span class="price-item">กำลังโหลดราคาน้ำมัน...</span>
+      </div>
+    </div>
 
     <!-- ===== Summary Cards ===== -->
     <div class="summary-grid">
@@ -72,12 +78,14 @@
         <option value="open">เปิด</option>
         <option value="closed">ปิด</option>
       </select>
-      <button class="btn-add" id="addStationBtn">➕ เพิ่มปั๊ม</button>
-      <button class="btn-reset" id="resetDataBtn" title="รีเซ็ตข้อมูลกลับเป็นค่าเริ่มต้น">🔄 รีเซ็ต</button>
+      <button class="btn-admin public-only" id="loginBtn">🔒 เข้าสู่ระบบเจ้าหน้าที่</button>
+      <button class="btn-admin admin-only" id="logoutBtn" style="display: none;">🔓 ออกจากระบบ</button>
+      <button class="btn-add admin-only" id="addStationBtn" style="display: none;">➕ เพิ่มปั๊ม</button>
+      <button class="btn-reset admin-only" id="resetDataBtn" title="รีเซ็ตข้อมูลกลับเป็นค่าเริ่มต้น" style="display: none;">🔄 รีเซ็ต</button>
     </div>
 
     <!-- ===== Tip Bar ===== -->
-    <div class="tip-bar">
+    <div class="tip-bar admin-only" style="display: none;">
       💡 <strong>คลิกที่ ✓ / ✗</strong> ในตารางเพื่อเปลี่ยนสถานะน้ำมัน | คลิก <strong>เปิด/ปิด</strong> เพื่อเปลี่ยนสถานะปั๊ม | ข้อมูลจะบันทึกอัตโนมัติ
     </div>
 
@@ -104,7 +112,7 @@
                 <th>95</th>
                 <th>E20</th>
                 <th>E85</th>
-                <th>จัดการ</th>
+                <th class="admin-only" style="display: none;">จัดการ</th>
               </tr>
             </thead>
             <tbody id="stationTableBody">
@@ -197,6 +205,26 @@
         <div class="form-actions">
           <button type="button" class="btn-secondary" id="cancelBtn2" onclick="document.getElementById('stationModal').classList.remove('active')">ยกเลิก</button>
           <button type="submit" class="btn-primary">💾 บันทึก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== Login Modal ===== -->
+  <div class="modal-overlay" id="loginModal">
+    <div class="modal login-modal">
+      <div class="modal__header">
+        <h2 class="modal__title">🔒 เข้าสู่ระบบเจ้าหน้าที่</h2>
+        <button class="modal__close" id="loginCancelBtn">✕</button>
+      </div>
+      <form id="loginForm" class="modal__form">
+        <div class="form-group">
+          <label for="formPassword">รหัสผ่าน (PIN)</label>
+          <input type="password" id="formPassword" required placeholder="ใส่รหัสผ่านเพื่อเข้าสู่ระบบ">
+          <small style="color:var(--text-muted); margin-top: 4px;">(รหัสผ่านตั้งต้น: 1234)</small>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" style="width: 100%;">เข้าสู่ระบบ</button>
         </div>
       </form>
     </div>

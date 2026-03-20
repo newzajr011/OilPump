@@ -8,8 +8,11 @@
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0e17">
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -78,6 +81,7 @@
         <option value="open">เปิด</option>
         <option value="closed">ปิด</option>
       </select>
+      <button class="btn-location" id="sortLocationBtn" title="เรียงลำดับจากปั๊มที่อยู่ใกล้ที่สุด">📍 ใกล้ฉัน</button>
       <button class="btn-admin public-only" id="loginBtn">🔒 เข้าสู่ระบบเจ้าหน้าที่</button>
       <button class="btn-admin admin-only" id="logoutBtn" style="display: none;">🔓 ออกจากระบบ</button>
       <button class="btn-add admin-only" id="addStationBtn" style="display: none;">➕ เพิ่มปั๊ม</button>
@@ -112,6 +116,7 @@
                 <th>95</th>
                 <th>E20</th>
                 <th>E85</th>
+                <th class="public-only">แจ้งปัญหา</th>
                 <th class="admin-only" style="display: none;">จัดการ</th>
               </tr>
             </thead>
@@ -176,6 +181,16 @@
         <div class="form-group">
           <label for="formAddress">ที่อยู่</label>
           <input type="text" id="formAddress" required placeholder="เช่น 123 ถ.มิตรภาพ ต.ในเมือง">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="formLat">ละติจูด (Latitude)</label>
+            <input type="number" step="any" id="formLat" placeholder="14.5492">
+          </div>
+          <div class="form-group">
+            <label for="formLng">ลองจิจูด (Longitude)</label>
+            <input type="number" step="any" id="formLng" placeholder="100.7324">
+          </div>
         </div>
         <div class="form-group">
           <label for="formMapUrl">ลิงก์ Google Maps (ถ้าต้องการให้ปักหมุดเป๊ะๆ)</label>

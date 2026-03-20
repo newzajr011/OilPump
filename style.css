@@ -664,6 +664,32 @@ a.station-name__address:hover {
   color: #fff;
 }
 
+/* ===== Location / GPS Button ===== */
+.btn-location {
+  padding: 14px 20px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-md);
+  color: #34d399;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.btn-location:hover {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: #10b981;
+}
+
+.btn-location--active {
+  background: var(--accent-green);
+  color: white;
+  border-color: var(--accent-green);
+}
+
 /* ===== Tip Bar ===== */
 .tip-bar {
   background: rgba(59, 130, 246, 0.08);
@@ -705,6 +731,25 @@ a.station-name__address:hover {
 .action-btn--delete:hover {
   background: rgba(239, 68, 68, 0.15);
   border-color: var(--accent-red);
+}
+
+.report-btn {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.report-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: var(--accent-red);
+}
+
+.action-btn--clear {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.action-btn--clear:hover {
+  border-color: var(--accent-green);
 }
 
 /* ===== Modal Overlay ===== */

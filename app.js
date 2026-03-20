@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalForm = document.getElementById("stationForm");
   const cancelBtn = document.getElementById("cancelBtn");
   const resetDataBtn = document.getElementById("resetDataBtn");
+  const sortLocationBtn = document.getElementById("sortLocationBtn");
 
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
@@ -21,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const priceMarquee = document.getElementById("priceMarquee");
 
   let isAdmin = sessionStorage.getItem("isAdmin") === "true";
+  let userLocation = null;
 
   function updateAdminUI() {
     document.querySelectorAll('.admin-only').forEach(el => {
@@ -126,6 +128,13 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchFuelPrices();
     loadStations(); // Starts real-time listener which also updates UI
     attachEvents();
+
+    // SW Registration
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('Service Worker Registered'))
+        .catch(err => console.error('Service Worker Error', err));
+    }
   }
 
   // ===== Populate Brand Filter =====
@@ -152,6 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cancelBtn.addEventListener("click", closeModal);
     modalForm.addEventListener("submit", handleFormSubmit);
     resetDataBtn.addEventListener("click", handleResetData);
+    sortLocationBtn.addEventListener("click", handleSortLocation);
 
     loginBtn.addEventListener("click", () => {
       loginModal.classList.add("active");
@@ -209,12 +219,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const target = e.target.closest("[data-action]");
     if (!target) return;
     
-    if (!isAdmin) return; // Project actions from non-admins
-
     const action = target.dataset.action;
     const id = parseInt(target.dataset.id);
     const station = fuelStations.find(s => s.id === id);
     if (!station) return;
+
+    if (!isAdmin) {
+      if (action === "report") {
+        showConfirm(`ข้อมูลปั๊ม "${station.name}" ผิดพลาดหรือน้ำมันหมดใช่หรือไม่? ตัวระบบจะส่งรายงานให้แอดมินเข้าไปตรวจสอบแก้ไขครับ`, () => {
+          if (station.firebaseKey) {
+            const currentReps = station.reports || 0;
+            dbRef.child(station.firebaseKey).update({ reports: currentReps + 1, lastUpdated: formatNow() });
+            alert("✅ ส่งรายงานไปให้เจ้าหน้าที่ตรวจสอบเรียบร้อย ขอบคุณที่เป็นหูเป็นตาครับ!");
+          }
+        });
+      }
+      return; // Protect other actions from non-admins
+    }
 
     switch (action) {
       case "toggle-fuel": {
@@ -251,6 +272,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         break;
       }
+      case "clear-report": {
+        if (station.firebaseKey) {
+          dbRef.child(station.firebaseKey).update({ reports: 0 });
+        }
+        break;
+      }
     }
   }
 
@@ -270,6 +297,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("formName").value = station.name;
     document.getElementById("formBrand").value = station.brand;
     document.getElementById("formAddress").value = station.address;
+    document.getElementById("formLat").value = station.lat || "";
+    document.getElementById("formLng").value = station.lng || "";
     document.getElementById("formMapUrl").value = station.mapUrl || "";
     document.getElementById("formStatus").value = station.status;
     document.getElementById("fuelDiesel").checked = station.fuels.diesel;
@@ -294,6 +323,8 @@ document.addEventListener("DOMContentLoaded", () => {
       brand: document.getElementById("formBrand").value.trim(),
       address: document.getElementById("formAddress").value.trim(),
       mapUrl: mapUrlVal,
+      lat: document.getElementById("formLat").value ? parseFloat(document.getElementById("formLat").value) : null,
+      lng: document.getElementById("formLng").value ? parseFloat(document.getElementById("formLng").value) : null,
       status: document.getElementById("formStatus").value,
       fuels: {
         diesel: document.getElementById("fuelDiesel").checked,
@@ -363,13 +394,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  // ===== Filter Stations =====
+  // ===== Filter & Sort Stations =====
   function getFilteredStations() {
     const query = searchInput.value.trim().toLowerCase();
     const brand = brandFilter.value;
     const status = statusFilter.value;
 
-    return fuelStations.filter(s => {
+    let filtered = fuelStations.filter(s => {
       const matchQuery = !query ||
         s.name.toLowerCase().includes(query) ||
         s.address.toLowerCase().includes(query);
@@ -377,6 +408,51 @@ document.addEventListener("DOMContentLoaded", () => {
       const matchStatus = !status || s.status === status;
       return matchQuery && matchBrand && matchStatus;
     });
+
+    if (userLocation) {
+      filtered = filtered.map(s => {
+        return {
+           ...s,
+           calculatedDist: calculateDistance(userLocation.lat, userLocation.lng, s.lat, s.lng)
+        };
+      }).sort((a, b) => a.calculatedDist - b.calculatedDist);
+    }
+
+    return filtered;
+  }
+
+  // ===== Haversine Distance Calculation =====
+  function handleSortLocation() {
+    if (!navigator.geolocation) {
+      alert("เบราว์เซอร์ของคุณไม่รองรับการค้นหาตำแหน่ง (Geolocation)");
+      return;
+    }
+    
+    sortLocationBtn.innerHTML = "⏳ กำลังค้นหา...";
+    navigator.geolocation.getCurrentPosition((position) => {
+      userLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+      sortLocationBtn.innerHTML = "📍 เรียงใกล้ฉันแล้ว";
+      sortLocationBtn.classList.add("btn-location--active");
+      updateDashboard();
+    }, (error) => {
+      alert("ไม่สามารถค้นหาตำแหน่งได้ กรุณากดอนุญาตสิทธิ์ Location ก่อนครับ");
+      sortLocationBtn.innerHTML = "📍 ใกล้ฉัน";
+    });
+  }
+
+  function calculateDistance(lat1, lon1, lat2, lon2) {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity; 
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   }
 
   // ===== Update Entire Dashboard =====
